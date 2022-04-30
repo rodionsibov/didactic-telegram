@@ -2,7 +2,10 @@ import { CdkDragDrop, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Component } from '@angular/core';
 import { TaskInterface } from './task/task-interface';
 import { MatDialog } from '@angular/material/dialog';
-import { TaskDialogComponent, TaskDialogResult } from './task-dialog/task-dialog.component';
+import {
+  TaskDialogComponent,
+  TaskDialogResult,
+} from './task-dialog/task-dialog.component';
 
 @Component({
   selector: 'app-root',
@@ -42,7 +45,29 @@ export class AppComponent {
       });
   }
 
-  editTask(list: string, task: TaskInterface): void {}
+  editTask(list: 'done' | 'todo' | 'inProgress', task: TaskInterface): void {
+    const dialogRef = this.dialog.open(TaskDialogComponent, {
+      width: '270px',
+      data: {
+        task,
+        enableDelete: true,
+      },
+    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: TaskDialogResult | undefined) => {
+        if (!result) {
+          return;
+        }
+        const dataList = this[list];
+        const taskIndex = dataList.indexOf(task);
+        if (result.delete) {
+          dataList.splice(taskIndex, 1);
+        } else {
+          dataList[taskIndex] = task;
+        }
+      });
+  }
 
   drop(event: CdkDragDrop<any>): void {
     if (event.previousContainer === event.container) {

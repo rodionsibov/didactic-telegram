@@ -1,5 +1,7 @@
 # AngularFirebaseDashboard
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e9981e02-0cbc-4725-9824-e3cc6bdf8d18/deploy-status)](https://app.netlify.com/sites/gregarious-concha-ee015c/deploys)
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.4.
 
 ## Development server

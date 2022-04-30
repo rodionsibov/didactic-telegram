@@ -2,6 +2,16 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TaskInterface } from '../task/task-interface';
 
+export interface TaskDialogData {
+  task: Partial<TaskInterface>;
+  enableDelete: boolean;
+}
+
+export interface TaskDialogResult {
+  task: TaskInterface;
+  delete?: boolean;
+}
+
 @Component({
   selector: 'app-task-dialog',
   templateUrl: './task-dialog.component.html',
@@ -22,14 +32,4 @@ export class TaskDialogComponent implements OnInit {
     this.data.task.description = this.backupTask.description;
     this.dialogRef.close(this.data);
   }
-}
-
-export interface TaskDialogData {
-  task: Partial<TaskInterface>;
-  enableDelete: boolean;
-}
-
-export interface TaskDialogResult {
-  task: TaskInterface;
-  delete?: boolean;
 }
