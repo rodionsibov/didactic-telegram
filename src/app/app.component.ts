@@ -7,26 +7,54 @@ import {
   TaskDialogResult,
 } from './task-dialog/task-dialog.component';
 
+import { BehaviorSubject, Observable } from 'rxjs';
+import {
+  AngularFirestore,
+  AngularFirestoreCollection,
+} from '@angular/fire/compat/firestore';
+
+const getObservable = (
+  collection: AngularFirestoreCollection<TaskInterface>
+) => {
+  const subject = new BehaviorSubject<TaskInterface[]>([]);
+  collection
+    .valueChanges({ idField: 'id' })
+    .subscribe((val: TaskInterface[]) => {
+      subject.next(val);
+    });
+  return subject;
+};
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  todo: TaskInterface[] = [
-    {
-      title: 'Buy apples',
-      description: 'Go to the store and buy apples',
-    },
-    {
-      title: 'Create a Kanban app',
-      description: 'Using Firebase and Angular create a Kanban app!',
-    },
-  ];
-  inProgress: TaskInterface[] = [];
-  done: TaskInterface[] = [];
+  // todo: TaskInterface[] = [
+  //   {
+  //     title: 'Buy apples',
+  //     description: 'Go to the store and buy apples',
+  //   },
+  //   {
+  //     title: 'Create a Kanban app',
+  //     description: 'Using Firebase and Angular create a Kanban app!',
+  //   },
+  // ];
+  // inProgress: TaskInterface[] = [];
+  // done: TaskInterface[] = [];
 
-  constructor(private dialog: MatDialog) {}
+  todo = getObservable(this.store.collection('todo')) as Observable<
+    TaskInterface[]
+  >;
+  inProgress = getObservable(this.store.collection('inProgress')) as Observable<
+    TaskInterface[]
+  >;
+  done = getObservable(this.store.collection('done')) as Observable<
+    TaskInterface[]
+  >;
+
+  constructor(private dialog: MatDialog, private store: AngularFirestore) {}
 
   newTask(): void {
     const dialogRef = this.dialog.open(TaskDialogComponent, {
@@ -41,7 +69,7 @@ export class AppComponent {
         if (!result) {
           return;
         }
-        this.todo.push(result.task);
+        this.store.collection('todo').add(result.task);
       });
   }
 
@@ -59,12 +87,10 @@ export class AppComponent {
         if (!result) {
           return;
         }
-        const dataList = this[list];
-        const taskIndex = dataList.indexOf(task);
         if (result.delete) {
-          dataList.splice(taskIndex, 1);
+          this.store.collection(list).doc(task.id).delete();
         } else {
-          dataList[taskIndex] = task;
+          this.store.collection(list).doc(task.id).update(task);
         }
       });
   }
@@ -73,9 +99,14 @@ export class AppComponent {
     if (event.previousContainer === event.container) {
       return;
     }
-    if (!event.container.data || !event.previousContainer.data) {
-      return;
-    }
+    const item = event.previousContainer.data[event.previousIndex];
+    this.store.firestore.runTransaction(() => {
+      const promise = Promise.all([
+        this.store.collection(event.previousContainer.id).doc(item.id).delete(),
+        this.store.collection(event.container.id).add(item),
+      ]);
+      return promise;
+    });
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
